@@ -1,8 +1,9 @@
 import configureStore from "./store/configureStore";
 
-const store = configureStore();
+import { loadBugs, assingBugToUser } from "./store/bugs";
 
-store.dispatch({
-  type: "error",
-  payload: { message: "An error occurred." },
-});
+const store = configureStore();
+//UI Layer
+store.dispatch(loadBugs());
+
+setTimeout(() => store.dispatch(assingBugToUser(1, 4)), 2000);
