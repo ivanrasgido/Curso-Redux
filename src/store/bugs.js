@@ -14,23 +14,19 @@ const slice = createSlice({
     bugsRequested: (bugs, action) => {
       bugs.loading = true;
     },
-
     bugsReceived: (bugs, action) => {
       bugs.list = action.payload;
       bugs.loading = false;
       bugs.lastFetch = Date.now();
     },
-
-    bugsRequestFailed: (bugs, action) => {
+    bugsRequestedFailed: (bugs, action) => {
       bugs.loading = false;
     },
-
     bugAssignedToUser: (bugs, action) => {
       const { id: bugId, userId } = action.payload;
       const index = bugs.list.findIndex((bug) => bug.id === bugId);
       bugs.list[index].userId = userId;
     },
-
     bugAdded: (bugs, action) => {
       bugs.list.push(action.payload);
     },
@@ -48,25 +44,26 @@ export const {
   bugAssignedToUser,
   bugsReceived,
   bugsRequested,
-  bugsRequestFailed,
+  bugsRequestedFailed,
 } = slice.actions;
 export default slice.reducer;
 
-//Action Creators
+// Action creators
 const url = "/bugs";
 
 export const loadBugs = () => (dispatch, getState) => {
   const { lastFetch } = getState().entities.bugs;
 
   const diffInMinutes = moment().diff(moment(lastFetch), "minutes");
+
   if (diffInMinutes < 10) return;
 
-  dispatch(
+  return dispatch(
     apiCallBegan({
       url,
       onStart: bugsRequested.type,
       onSuccess: bugsReceived.type,
-      onError: bugsRequestFailed.type,
+      onError: bugsRequestedFailed.type,
     })
   );
 };
@@ -87,7 +84,7 @@ export const resolveBug = (id) =>
     onSuccess: bugResolved.type,
   });
 
-export const assingBugToUser = (bugId, userId) =>
+export const assignBugToUser = (bugId, userId) =>
   apiCallBegan({
     url: url + "/" + bugId,
     method: "patch",
@@ -95,12 +92,10 @@ export const assingBugToUser = (bugId, userId) =>
     onSuccess: bugAssignedToUser.type,
   });
 
-//selector
-
 export const getUnresolvedBugs = createSelector(
   (state) => state.entities.bugs,
   (state) => state.entities.projects,
-  (bugs, projects) => bugs.filter((bug) => !bug.resolved)
+  (bugs, projects) => bugs.list.filter((bug) => !bug.resolved)
 );
 
 export const getBugsByUser = (userId) =>
